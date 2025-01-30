@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NCERT Nichod Score Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .clay {
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 16px;
+            box-shadow: 
+                35px 35px 68px 0px rgba(157, 177, 255, 0.2),
+                inset -8px -8px 16px 0px rgba(157, 177, 255, 0.6),
+                inset 0px 11px 28px 0px rgb(255, 255, 255);
+        }
+        
+        .clay-button {
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 12px;
+            box-shadow: 
+                8px 8px 16px 0px rgba(157, 177, 255, 0.2),
+                inset -2px -2px 4px 0px rgba(157, 177, 255, 0.6),
+                inset 0px 3px 7px 0px rgb(255, 255, 255);
+            transition: all 0.2s ease;
+        }
+
+        .clay-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                10px 10px 20px 0px rgba(157, 177, 255, 0.3),
+                inset -3px -3px 6px 0px rgba(157, 177, 255, 0.7),
+                inset 0px 4px 8px 0px rgb(255, 255, 255);
+        }
+
+        body {
+            background: #f0f4ff;    
+        }
+
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 5px solid #FFF;
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            position: relative;
+            animation: pulse 1s linear infinite;
+        }
+        .loader:after {
+            content: '';
+            position: absolute;
+            width: 48px;
+            height: 48px;
+            border: 5px solid #FFF;
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            animation: scaleUp 1s linear infinite;
+        }
+
+        @keyframes scaleUp {
+            0% { transform: translate(-50%, -50%) scale(0) }
+            60% , 100% { transform: translate(-50%, -50%)  scale(1)}
+        }
+        @keyframes pulse {
+            0% , 60% , 100%{ transform:  scale(1) }
+            80% { transform:  scale(1.2)}
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+
+<div id="loading" class="fixed top-0 left-0 w-full h-full bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <span class="loader"></span>
+</div>
+
+<!-- Login/Register Page -->
+<div id="auth-page" class="container mx-auto px-4 py-8">
+    <div class="max-w-md mx-auto clay p-8">
+        <div class="flex justify-center mb-8">
+            <button id="showLogin" class="clay-button px-6 py-2 mx-2">Login</button>
+            <button id="showRegister" class="clay-button px-6 py-2 mx-2">Register</button>
+        </div>
+
+        <!-- Login Form -->
+        <form id="loginForm" class="space-y-4">
+            <div>
+                <label class="block mb-2">Roll Number / Admin Email</label>
+                <input type="text" id="loginId" class="w-full p-2 rounded-lg clay" required>
+            </div>
+            <div id="adminPasswordField" class="hidden">
+                <label class="block mb-2">Password</label>
+                <input type="password" id="adminPassword" class="w-full p-2 rounded-lg clay">
+            </div>
+            <button type="submit" class="w-full clay-button py-2">Login</button>
+        </form>
+
+        <!-- Register Form -->
+        <form id="registerForm" class="space-y-4 hidden">
+            <div>
+                <label class="block mb-2">Name</label>
+                <input type="text" id="regName" class="w-full p-2 rounded-lg clay" required>
+            </div>
+            <div>
+                <label class="block mb-2">Mobile Number</label>
+                <input type="tel" id="regMobile" class="w-full p-2 rounded-lg clay" required>
+            </div>
+            <button type="submit" class="w-full clay-button py-2">Register</button>
+        </form>
+    </div>
+</div>
+
+<!-- Student Dashboard -->
+<div id="student-dashboard" class="container mx-auto px-4 py-8 hidden">
+    <div class="clay p-8 mb-8">
+        <h2 class="text-2xl mb-6">Add Test Score</h2>
+        <form id="scoreForm" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block mb-2">Subject</label>
+                    <select id="subject" class="w-full p-2 rounded-lg clay" required>
+                        <option value="Physics">Physics</option>
+                        <option value="Chemistry">Chemistry</option>
+                        <option value="Biology">Biology</option>
+                        <option value="Full Syllabus">Full Syllabus</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block mb-2">Test Date</label>
+                    <input type="date" id="testDate" class="w-full p-2 rounded-lg clay" required>
+                </div>
+                <div>
+                    <label class="block mb-2">Correct Questions</label>
+                    <input type="number" id="correctQs" min="0" class="w-full p-2 rounded-lg clay" required>
+                </div>
+                <div>
+                    <label class="block mb-2">Incorrect Questions</label>
+                    <input type="number" id="incorrectQs" min="0" class="w-full p-2 rounded-lg clay" required>
+                </div>
+            </div>
+            <div id="totalScore" class="text-xl font-bold mt-4">Total Score: 0</div>
+            <button type="submit" class="clay-button px-8 py-2">Add Score</button>
+        </form>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="clay p-6">
+            <h3 class="text-xl mb-4">Progress Chart</h3>
+            <canvas id="progressChart"></canvas>
+        </div>
+        <div class="clay p-6">
+            <h3 class="text-xl mb-4">Subject Analysis</h3>
+            <canvas id="subjectChart"></canvas>
+        </div>
+    </div>
+
+    <div class="clay p-6 mt-8">
+        <h3 class="text-xl mb-4">Test History</h3>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr>
+                        <th class="p-2">Date</th>
+                        <th class="p-2">Subject</th>
+                        <th class="p-2">Correct</th>
+                        <th class="p-2">Incorrect</th>
+                        <th class="p-2">Score</th>
+                        <th class="p-2">Trend</th>
+                    </tr>
+                </thead>
+                <tbody id="testHistory"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Admin Dashboard -->
+<div id="admin-dashboard" class="container mx-auto px-4 py-8 hidden">
+    <div class="clay p-6 mb-8">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl">Students Overview</h2>
+            <input type="text" id="studentSearch" placeholder="Search by name or roll number" class="p-2 rounded-lg clay">
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr>
+                        <th class="p-2">Roll Number</th>
+                        <th class="p-2">Name</th>
+                        <th class="p-2">Mobile</th>
+                        <th class="p-2">Avg Score</th>
+                        <th class="p-2">Total Tests</th>
+                        <th class="p-2">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="studentsList"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="studentDetails" class="clay p-6 hidden">
+        <h3 class="text-xl mb-4">Student Details</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+                <canvas id="studentProgressChart"></canvas>
+            </div>
+            <div>
+                <canvas id="studentSubjectChart"></canvas>
+            </div>
+        </div>
+        <div class="mt-8">
+            <h4 class="text-lg mb-2">Test History</h4>
+            <table class="w-full">
+                <thead>
+                    <tr>
+                        <th class="p-2">Date</th>
+                        <th class="p-2">Subject</th>
+                        <th class="p-2">Score</th>
+                    </tr>
+                </thead>
+                <tbody id="studentTestHistory"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+let userId = localStorage.getItem('userId');
+const appSlug = 'ncert-tracker-001';
+const API_URL = 'https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/mongodb';
+const headers = {
+    'Authorization': 'Bearer ASsoF5EztXeH0uFoiPrsanuuQ6P2',
+    'Content-Type': 'application/json'
+};
+
+// Show/hide loading spinner
+const toggleLoading = (show) => {
+    document.getElementById('loading').style.display = show ? 'flex' : 'none';
+}
+
+// Initialize date input with today's date
+document.getElementById('testDate').valueAsDate = new Date();
+
+// Switch between login and register forms
+document.getElementById('showLogin').addEventListener('click', () => {
+    document.getElementById('loginForm').classList.remove('hidden');
+    document.getElementById('registerForm').classList.add('hidden');
+});
+
+document.getElementById('showRegister').addEventListener('click', () => {
+    document.getElementById('loginForm').classList.add('hidden');
+    document.getElementById('registerForm').classList.remove('hidden');
+});
+
+// Login form handling
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    toggleLoading(true);
+
+    const loginId = document.getElementById('loginId').value;
+    const password = document.getElementById('adminPassword').value;
+
+    if (loginId === 'study@gmail.com') {
+        if (password === 'anmol0610') {
+            document.getElementById('auth-page').classList.add('hidden');
+            document.getElementById('admin-dashboard').classList.remove('hidden');
+            loadAdminDashboard();
+        } else {
+            alert('Invalid admin credentials');
+        }
+    } else {
+        // Student login
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    appSlug,
+                    action: 'read',
+                    collection: 'students',
+                    conditions: { rollNumber: loginId }
+                })
+            });
+            
+            const data = await response.json();
+            if (data.result.read && data.result.read.length > 0) {
+                userId = data.result.read[0]._id;
+                localStorage.setItem('userId', userId);
+                document.getElementById('auth-page').classList.add('hidden');
+                document.getElementById('student-dashboard').classList.remove('hidden');
+                loadStudentDashboard();
+            } else {
+                alert('Invalid roll number');
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            alert('Login failed');
+        }
+    }
+    toggleLoading(false);
+});
+
+// Register form handling
+document.getElementById('registerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    toggleLoading(true);
+
+    const name = document.getElementById('regName').value;
+    const mobile = document.getElementById('regMobile').value;
+    const rollNumber = 'R' + Date.now().toString().slice(-6);
+
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+                appSlug,
+                action: 'create',
+                collection: 'students',
+                data: { name, mobile, rollNumber }
+            })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            alert(`Registration successful! Your roll number is: ${rollNumber}`);
+            document.getElementById('registerForm').reset();
+            document.getElementById('showLogin').click();
+        }
+    } catch (error) {
+        console.error('Registration error:', error);
+        alert('Registration failed');
+    }
+    toggleLoading(false);
+});
+
+// Calculate total score
+const calculateScore = () => {
+    const correct = parseInt(document.getElementById('correctQs').value) || 0;
+    const incorrect = parseInt(document.getElementById('incorrectQs').value) || 0;
+    const total = (correct * 4) - incorrect;
+    document.getElementById('totalScore').textContent = `Total Score: ${total}`;
+    return total;
+};
+
+['correctQs', 'incorrectQs'].forEach(id => {
+    document.getElementById(id).addEventListener('input', calculateScore);
+});
+
+// Add score form handling
+document.getElementById('scoreForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    toggleLoading(true);
+
+    const scoreData = {
+        subject: document.getElementById('subject').value,
+        date: document.getElementById('testDate').value,
+        correctQs: parseInt(document.getElementById('correctQs').value),
+        incorrectQs: parseInt(document.getElementById('incorrectQs').value),
+        score: calculateScore(),
+        studentId: userId
+    };
+
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+                appSlug,
+                action: 'create',
+                collection: 'scores',
+                data: scoreData
+            })
+        });
+        
+        if (response.ok) {
+            document.getElementById('scoreForm').reset();
+            document.getElementById('testDate').valueAsDate = new Date();
+            document.getElementById('totalScore').textContent = 'Total Score: 0';
+            loadStudentDashboard();
+        }
+    } catch (error) {
+        console.error('Score submission error:', error);
+        alert('Failed to submit score');
+    }
+    toggleLoading(false);
+});
+
+// Load student dashboard data
+async function loadStudentDashboard() {
+    toggleLoading(true);
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+                appSlug,
+                action: 'read',
+                collection: 'scores',
+                conditions: { studentId: userId }
+            })
+        });
+        
+        const data = await response.json();
+        const scores = data.result.read || [];
+        
+        updateProgressChart(scores);
+        updateSubjectChart(scores);
+        updateTestHistory(scores);
+    } catch (error) {
+        console.error('Dashboard loading error:', error);
+    }
+    toggleLoading(false);
+}
+
+// Charts and visualization functions
+function updateProgressChart(scores) {
+    const ctx = document.getElementById('progressChart').getContext('2d');
+    const sortedScores = scores.sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: sortedScores.map(score => score.date),
+            datasets: [{
+                label: 'Score Progress',
+                data: sortedScores.map(score => score.score),
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1
+            }]
+        }
+    });
+}
+
+function updateSubjectChart(scores) {
+    const ctx = document.getElementById('subjectChart').getContext('2d');
+    const subjects = ['Physics', 'Chemistry', 'Biology', 'Full Syllabus'];
+    const subjectScores = subjects.map(subject => {
+        const subjectTests = scores.filter(score => score.subject === subject);
+        return subjectTests.reduce((sum, score) => sum + score.score, 0) / (subjectTests.length || 1);
+    });
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: subjects,
+            datasets: [{
+                label: 'Average Score by Subject',
+                data: subjectScores,
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.5)',
+                    'rgba(54, 162, 235, 0.5)',
+                    'rgba(75, 192, 192, 0.5)',
+                    'rgba(153, 102, 255, 0.5)'
+                ]
+            }]
+        }
+    });
+}
+
+function updateTestHistory(scores) {
+    const tbody = document.getElementById('testHistory');
+    tbody.innerHTML = '';
+
+    scores.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach((score, index) => {
+        const tr = document.createElement('tr');
+        const trend = index < scores.length - 1 ? 
+            (score.score > scores[index + 1].score ? '↑' : '↓') : '-';
+        
+        tr.innerHTML = `
+            <td class="p-2">${score.date}</td>
+            <td class="p-2">${score.subject}</td>
+            <td class="p-2">${score.correctQs}</td>
+            <td class="p-2">${score.incorrectQs}</td>
+            <td class="p-2">${score.score}</td>
+            <td class="p-2 ${trend === '↑' ? 'text-green-500' : 'text-red-500'}">${trend}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+// Admin dashboard functions
+async function loadAdminDashboard() {
+    toggleLoading(true);
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+                appSlug,
+                action: 'read',
+                collection: 'students'
+            })
+        });
+        
+        const data = await response.json();
+        updateStudentsList(data.result.read || []);
+    } catch (error) {
+        console.error('Admin dashboard loading error:', error);
+    }
+    toggleLoading(false);
+}
+
+async function updateStudentsList(students) {
+    const tbody = document.getElementById('studentsList');
+    tbody.innerHTML = '';
+
+    for (const student of students) {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+                appSlug,
+                action: 'read',
+                collection: 'scores',
+                conditions: { studentId: student._id }
+            })
+        });
+        
+        const data = await response.json();
+        const scores = data.result.read || [];
+        const avgScore = scores.reduce((sum, score) => sum + score.score, 0) / (scores.length || 1);
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td class="p-2">${student.rollNumber}</td>
+            <td class="p-2">${student.name}</td>
+            <td class="p-2">${student.mobile}</td>
+            <td class="p-2">${avgScore.toFixed(1)}</td>
+            <td class="p-2">${scores.length}</td>
+            <td class="p-2">
+                <button onclick="viewStudentDetails('${student._id}')" class="clay-button px-4 py-1">
+                    View Details
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    }
+}
+
+async function viewStudentDetails(studentId) {
+    toggleLoading(true);
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+                appSlug,
+                action: 'read',
+                collection: 'scores',
+                conditions: { studentId }
+            })
+        });
+        
+        const data = await response.json();
+        const scores = data.result.read || [];
+
+        document.getElementById('studentDetails').classList.remove('hidden');
+        updateStudentProgressChart(scores);
+        updateStudentSubjectChart(scores);
+        updateStudentTestHistory(scores);
+    } catch (error) {
+        console.error('Student details loading error:', error);
+    }
+    toggleLoading(false);
+}
+
+// Initialize login form
+document.getElementById('loginId').addEventListener('input', function() {
+    const adminPassField = document.getElementById('adminPasswordField');
+    if (this.value === 'study@gmail.com') {
+        adminPassField.classList.remove('hidden');
+    } else {
+        adminPassField.classList.add('hidden');
+    }
+});
+
+// Search functionality for admin dashboard
+document.getElementById('studentSearch').addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase();
+    const rows = document.getElementById('studentsList').getElementsByTagName('tr');
+    
+    Array.from(rows).forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchTerm) ? '' : 'none';
+    });
+});
+</script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
